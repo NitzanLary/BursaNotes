@@ -5,7 +5,9 @@ import Link from "next/link";
 import { BookOpenText, Plus, Users, X } from "lucide-react";
 import { useState } from "react";
 import { useWorkspace } from "@/lib/store/workspace-store";
-import { resolveTicker } from "@/lib/mock/tickers";
+import { useTickers } from "@/lib/tickers/client";
+import { resolveTicker } from "@/lib/tickers/resolve";
+import type { Ticker } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
@@ -19,6 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { TickerCombobox } from "@/components/ui/ticker-combobox";
 
 export function TopBar() {
   const router = useRouter();
@@ -27,16 +30,13 @@ export function TopBar() {
   const setActiveTicker = useWorkspace((s) => s.setActiveTicker);
   const closeTicker = useWorkspace((s) => s.closeTicker);
   const openTicker = useWorkspace((s) => s.openTicker);
+  const { tickers } = useTickers();
   const [addOpen, setAddOpen] = useState(false);
-  const [newTicker, setNewTicker] = useState("");
 
-  const submitNew = () => {
-    const clean = newTicker.trim().toUpperCase();
-    if (!clean) return;
-    openTicker(clean);
-    setNewTicker("");
+  const pick = (ticker: Ticker) => {
+    openTicker(ticker.symbol);
     setAddOpen(false);
-    router.push(`/n/${encodeURIComponent(clean)}`);
+    router.push(`/n/${encodeURIComponent(ticker.symbol)}`);
   };
 
   return (
@@ -55,7 +55,7 @@ export function TopBar() {
 
       <div className="flex-1 min-w-0 flex items-center gap-1 overflow-x-auto">
         {openTickers.map((t) => {
-          const info = resolveTicker(t);
+          const info = resolveTicker(t, tickers);
           const isActive = t === activeTicker;
           return (
             <div
@@ -130,29 +130,12 @@ export function TopBar() {
           <DialogHeader>
             <DialogTitle>Open a new ticker</DialogTitle>
             <DialogDescription>
-              Type a symbol (e.g. GOOGL, NVDA, META) to start a new notebook.
+              Search by symbol or company name (e.g. NVDA, Apple, Tesla).
             </DialogDescription>
           </DialogHeader>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              submitNew();
-            }}
-            className="flex flex-col gap-3"
-          >
-            <input
-              autoFocus
-              value={newTicker}
-              onChange={(e) => setNewTicker(e.target.value.toUpperCase())}
-              placeholder="Ticker symbol"
-              className="px-3 py-2 rounded-md border border-border bg-background text-sm outline-none focus:border-primary/60"
-            />
-          </form>
+          <TickerCombobox autoFocus onSelect={pick} />
           <DialogFooter>
             <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
-            <Button onClick={submitNew} disabled={!newTicker.trim()}>
-              Open
-            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

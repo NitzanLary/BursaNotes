@@ -1,20 +1,22 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { ArrowRight, BookOpenText, FileText, Search } from "lucide-react";
+import { BookOpenText, FileText, Search } from "lucide-react";
 import { SUGGESTED_TICKERS } from "@/lib/mock/tickers";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { TickerCombobox } from "@/components/ui/ticker-combobox";
+import type { Ticker } from "@/lib/types";
 
 export default function LandingPage() {
   const router = useRouter();
-  const [value, setValue] = useState("");
 
   const submit = (symbol: string) => {
     const clean = symbol.trim().toUpperCase();
     if (!clean) return;
     router.push(`/n/${encodeURIComponent(clean)}`);
   };
+
+  const onSelectTicker = (ticker: Ticker) => submit(ticker.symbol);
 
   return (
     <div className="flex flex-col flex-1 min-h-svh">
@@ -45,34 +47,15 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              submit(value);
-            }}
-            className="w-full"
-          >
-            <div className="group flex items-center gap-3 bg-surface border border-border rounded-2xl shadow-sm px-5 py-4 focus-within:border-primary/60 focus-within:shadow-md transition">
-              <Search className="h-5 w-5 text-muted-foreground shrink-0" />
-              <input
-                autoFocus
-                value={value}
-                onChange={(e) => setValue(e.target.value.toUpperCase())}
-                placeholder="Enter a Ticker to Start Research"
-                className="flex-1 bg-transparent outline-none text-base placeholder:text-muted-foreground tracking-wide"
-                spellCheck={false}
-                autoComplete="off"
-              />
-              <button
-                type="submit"
-                disabled={!value.trim()}
-                className="h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110 transition"
-                aria-label="Open notebook"
-              >
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-          </form>
+          <div className="w-full">
+            <TickerCombobox
+              autoFocus
+              onSelect={onSelectTicker}
+              placeholder="Enter a Ticker to Start Research"
+              className="h-14 rounded-2xl border-border bg-surface shadow-sm px-5 focus-within:border-primary/60 focus-within:shadow-md focus-within:ring-0"
+              inputClassName="text-base tracking-wide"
+            />
+          </div>
 
           <div className="flex flex-col items-center gap-3">
             <span className="text-xs uppercase tracking-widest text-muted-foreground">
